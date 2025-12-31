@@ -1,1 +1,251 @@
-guaso guaso
+API CONTRACT — Mini WeTransfer (v1)
+
+
+🔐 AUTH
+
+    1️⃣ POST /auth/register
+
+    Crear un usuario.
+
+    2️⃣ POST /auth/login
+
+    Iniciar sesión y obtener token.
+
+
+-----------------------------------
+
+
+📁 FILES (privado, requiere login)
+
+    3️⃣ POST /files
+
+    Subir archivo.
+
+    4️⃣ GET /files
+
+    Listar mis archivos.
+
+    5️⃣ DELETE /files/:id
+
+    Borrar un archivo propio.
+
+
+
+-----------------------------------
+
+
+
+🌍 FILES (público)
+    6️⃣ GET /f/:publicId
+
+    Descargar archivo por link público.
+
+
+
+----------------------------------------------------------------
+
+🔐 Autenticación
+
+POST /auth/register
+
+    ❓ ¿Qué acción es?
+
+    Crear un usuario nuevo.
+
+    ❓ ¿Por qué POST?
+
+    Porque:
+
+    crea un recurso
+
+    cambia el estado del sistema
+
+    GET no sirve para crear.
+
+    Request
+        {
+          "email": "user@mail.com",
+          "password": "123456"
+        }
+    
+    Response(201)
+        {
+          "id": "user_id"
+        }
+
+    ⚠️ Errores
+      400 → datos mal formados
+      409 → email ya existe
+
+
+ 
+POST /auth/login
+
+    Descripción: login del filmmaker
+
+    Request
+
+        {
+          "email": "user@mail.com",
+          "password": "123456"
+        }
+
+    Response 200
+
+        {
+          "token": "jwt_token",
+          "user": {
+            "id": "u1",
+            "email": "user@mail.com"
+          }
+        }
+
+    Errores
+    401 -> Credenciales Invalidas
+
+        {
+          "error": "invalid_credentials"
+        }
+
+
+
+----------------------------------
+
+
+📁 3️⃣ POST /files
+
+    ❓ ¿Qué acción es?
+
+    Subir un archivo → crear un recurso File.
+
+    ❓ ¿Por qué POST?
+
+    Porque:
+
+    crea algo nuevo
+
+    cambia el sistema
+
+    tiene body grande (archivo)
+
+🔐 Headers
+    Authorization: Bearer JWT_TOKEN
+    Sin esto → 401.
+
+📥 Request (body)
+
+    tipo: multipart/form-data
+    campo: file
+    👉 el archivo vive en el body
+
+📤 Response (201)
+    {
+      "id": "file_id",
+      "filename": "video.mp4",
+      "size": 12345678,
+      "publicUrl": "https://app.com/f/abc123"
+    }
+
+⚠️ Errores
+    401 → no logueado
+    500 → error al subir
+
+
+
+
+----------------------------------
+
+
+
+📁 4️⃣ GET /files
+    ❓ ¿Qué acción es?
+
+      -Leer mis archivos.
+
+    ❓ ¿Por qué GET?
+
+      Porque:
+      -no crea
+      -no modifica
+      -solo lee
+
+    🔐 Headers
+        Authorization: Bearer JWT_TOKEN
+
+    📥 Request
+        ❌ sin body
+        (opcionalmente query params después)
+
+    📤 Response (200)
+        [
+          {
+            "id": "file_id",
+            "filename": "video.mp4",
+            "size": 12345678,
+            "publicUrl": "https://app.com/f/abc123",
+            "createdAt": "2025-01-01T12:00:00Z"
+          }
+        ]
+    
+    ⚠️ Errores
+        401 → no autorizado
+
+
+
+----------------------------------
+
+
+🗑️ 5️⃣ DELETE /files/:id
+    ❓ ¿Qué acción es?
+
+    -Eliminar un archivo.
+
+    ❓ ¿Por qué DELETE?
+
+    Porque:
+    -borra un recurso
+    -semántica clara
+
+    🔐 Headers
+        Authorization: Bearer JWT_TOKEN
+
+    📥 Request
+        -el id va en la URL
+        -no necesita body
+
+    📤 Response (200)
+        {
+          "success": true
+        }
+
+    ⚠️ Errores
+        401 → no logueado
+        403 → no es tu archivo
+        404 → no existe
+
+
+
+----------------------------------
+
+
+🌍 6️⃣ GET /f/:publicId
+    ❓ ¿Qué acción es?
+
+        -Descargar un archivo público.
+
+    ❓ ¿Por qué GET?
+
+        Porque:
+        -solo lee
+        -no requiere auth
+        -es un link compartible
+
+    📥 Request
+
+        -publicId en la URL
+        -sin headers especiales
+
+    📤 Response
+
+        -el archivo (stream)
+        -o 404 si no existe
